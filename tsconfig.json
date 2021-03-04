@@ -13,7 +13,8 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noUnusedLocals": true,
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules"]
