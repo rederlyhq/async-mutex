@@ -3,11 +3,11 @@ import assert from 'assert';
 import { InstalledClock, install } from '@sinonjs/fake-timers';
 
 import { E_CANCELED } from '../src/errors';
-import Semaphore from '../src/Semaphore';
+import Semaphore, { QueueLikeArray, QueueLikeSemaphore } from '../src/Semaphore';
 import SemaphoreInterface from '../src/SemaphoreInterface';
 import { withTimer } from './util';
 
-export const semaphoreSuite = (factory: (maxConcurrency: number, err?: Error) => SemaphoreInterface): void => {
+export const semaphoreSuite = (factory: (maxConcurrency: number, err?: Error, queue?: QueueLikeSemaphore) => SemaphoreInterface): void => {
     let semaphore: SemaphoreInterface;
     let clock: InstalledClock;
 
@@ -262,10 +262,15 @@ export const semaphoreSuite = (factory: (maxConcurrency: number, err?: Error) =>
 };
 
 suite('Semaphore', () => {
-    semaphoreSuite((maxConcurrency: number, err?: Error) => new Semaphore(maxConcurrency, err));
+    semaphoreSuite((maxConcurrency: number, err?: Error, queue?: QueueLikeSemaphore) => new Semaphore(maxConcurrency, err, queue));
 
     test('Semaphore constructor throws if value <= 0', () => {
         assert.throws(() => new Semaphore(0));
         assert.throws(() => new Semaphore(-1));
     });
+});
+
+suite('Semaphore with Explicit Array Queues', () => {
+    const _queue = <QueueLikeArray>[];
+    semaphoreSuite((maxConcurrency: number, err?: Error) => new Semaphore(maxConcurrency, err, _queue));
 });
