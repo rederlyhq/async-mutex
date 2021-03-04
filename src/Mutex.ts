@@ -1,9 +1,9 @@
 import MutexInterface from './MutexInterface';
-import Semaphore from './Semaphore';
+import Semaphore, { QueueEntry, QueueLike } from './Semaphore';
 
 class Mutex implements MutexInterface {
-    constructor(cancelError?: Error) {
-        this._semaphore = new Semaphore(1, cancelError);
+    constructor(cancelError?: Error, queue?: QueueLike<QueueEntry>) {
+        this._semaphore = new Semaphore(1, cancelError, queue);
     }
 
     async acquire(): Promise<MutexInterface.Releaser> {

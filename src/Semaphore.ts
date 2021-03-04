@@ -1,18 +1,29 @@
 import { E_CANCELED } from './errors';
 import SemaphoreInterface from './SemaphoreInterface';
 
-interface QueueEntry {
+export interface QueueEntry {
     resolve: (ticket: [number, SemaphoreInterface.Releaser]) => void;
     reject: (err: Error) => void;
 }
 
+export interface QueueLike<T> {
+    push: (...items: T[]) => number;
+    shift: () => T | undefined;
+    forEach: (callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: unknown) => void;
+    length: number;
+}
+
+export type QueueLikeSemaphore = QueueLike<QueueEntry>;
+export type QueueLikeArray = QueueEntry[];
+
 class Semaphore implements SemaphoreInterface {
-    constructor(private _maxConcurrency: number, private _cancelError: Error = E_CANCELED) {
+    constructor(private _maxConcurrency: number, private _cancelError: Error = E_CANCELED, private _queue: QueueLike<QueueEntry> = <QueueEntry[]>[]) {
         if (_maxConcurrency <= 0) {
             throw new Error('semaphore must be initialized to a positive value');
         }
 
         this._value = _maxConcurrency;
+        this._queue = _queue;
     }
 
     acquire(): Promise<[number, SemaphoreInterface.Releaser]> {
@@ -58,7 +69,7 @@ class Semaphore implements SemaphoreInterface {
 
     cancel(): void {
         this._queue.forEach((ticket) => ticket.reject(this._cancelError));
-        this._queue = [];
+        this._queue.length = 0;
     }
 
     private _dispatch(): void {
@@ -79,7 +90,6 @@ class Semaphore implements SemaphoreInterface {
         nextTicket.resolve([this._value--, this._currentReleaser]);
     }
 
-    private _queue: Array<QueueEntry> = [];
     private _currentReleaser: SemaphoreInterface.Releaser | undefined;
     private _value: number;
 }
