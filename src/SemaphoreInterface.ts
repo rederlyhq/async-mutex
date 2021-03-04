@@ -1,7 +1,7 @@
-interface SemaphoreInterface {
-    acquire(): Promise<[number, SemaphoreInterface.Releaser]>;
+interface SemaphoreInterface<U = void> {
+    acquire(data: U): Promise<[number, SemaphoreInterface.Releaser]>;
 
-    runExclusive<T>(callback: SemaphoreInterface.Worker<T>): Promise<T>;
+    runExclusive<T>(callback: SemaphoreInterface.Worker<T>, data: U): Promise<T>;
 
     isLocked(): boolean;
 

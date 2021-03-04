@@ -1,9 +1,10 @@
 import { E_CANCELED } from './errors';
 import SemaphoreInterface from './SemaphoreInterface';
 
-export interface QueueEntry {
+export interface QueueEntry<T = void> {
     resolve: (ticket: [number, SemaphoreInterface.Releaser]) => void;
     reject: (err: Error) => void;
+    data: T;
 }
 
 export interface QueueLike<T> {
@@ -16,20 +17,19 @@ export interface QueueLike<T> {
 export type QueueLikeSemaphore = QueueLike<QueueEntry>;
 export type QueueLikeArray = QueueEntry[];
 
-class Semaphore implements SemaphoreInterface {
-    constructor(private _maxConcurrency: number, private _cancelError: Error = E_CANCELED, private _queue: QueueLike<QueueEntry> = <QueueEntry[]>[]) {
+class Semaphore<U = void> implements SemaphoreInterface<U> {
+    constructor(private _maxConcurrency: number, private _cancelError: Error = E_CANCELED, private _queue: QueueLike<QueueEntry<U>> = <QueueEntry<U>[]>[]) {
         if (_maxConcurrency <= 0) {
             throw new Error('semaphore must be initialized to a positive value');
         }
 
         this._value = _maxConcurrency;
-        this._queue = _queue;
     }
 
-    acquire(): Promise<[number, SemaphoreInterface.Releaser]> {
+    acquire(data: U): Promise<[number, SemaphoreInterface.Releaser]> {
         const locked = this.isLocked();
         const ticketPromise = new Promise<[number, SemaphoreInterface.Releaser]>((resolve, reject) =>
-            this._queue.push({ resolve, reject })
+            this._queue.push({ resolve, reject, data })
         );
 
         if (!locked) this._dispatch();
@@ -37,8 +37,8 @@ class Semaphore implements SemaphoreInterface {
         return ticketPromise;
     }
 
-    async runExclusive<T>(callback: SemaphoreInterface.Worker<T>): Promise<T> {
-        const [value, release] = await this.acquire();
+    async runExclusive<T>(callback: SemaphoreInterface.Worker<T>, data: U): Promise<T> {
+        const [value, release] = await this.acquire(data);
 
         try {
             return await callback(value);
