@@ -1,7 +1,7 @@
-interface MutexInterface {
-    acquire(): Promise<MutexInterface.Releaser>;
+interface MutexInterface<U = void> {
+    acquire(data: U): Promise<MutexInterface.Releaser>;
 
-    runExclusive<T>(callback: MutexInterface.Worker<T>): Promise<T>;
+    runExclusive<T>(callback: MutexInterface.Worker<T>, data: U): Promise<T>;
 
     isLocked(): boolean;
 

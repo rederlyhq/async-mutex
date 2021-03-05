@@ -46,7 +46,7 @@ suite('Semaphore with Priority Queue', () => {
     const priorityQueue = new HeapHelper<QueueEntry>();
     semaphoreSuite((maxConcurrency: number, err?: Error) => new Semaphore(maxConcurrency, err, priorityQueue));
 
-    // TODO: These tests validate the expected behavior of TinyQueue + Semaphore.
+    // These tests validate the expected behavior of TinyQueue + Semaphore.
     suite('TinyQueue Implementation Tests', () => {
         let semaphore: SemaphoreInterface<number>;
         let clock: InstalledClock;
@@ -94,11 +94,16 @@ suite('Semaphore with Priority Queue', () => {
     })
 });
 
-
 suite('Mutex with Priority Queue', () => {
     const priorityQueue = new HeapHelper<QueueEntry>();
     mutexSuite((err?: Error) => new Mutex(err, priorityQueue));
 
     // TODO: These tests validate the expected behavior of TinyQueue + Mutex.
+});
+
+suite('withTimeout with Priority Queue', () => {
+    // const priorityQueue = new HeapHelper<QueueEntry>();
+
+    // TODO: These tests validate the expected behavior of TinyQueue + withTimeout.
 });
 

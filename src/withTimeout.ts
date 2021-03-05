@@ -2,12 +2,12 @@ import { E_TIMEOUT } from './errors';
 import MutexInterface from './MutexInterface';
 import SemaphoreInterface from './SemaphoreInterface';
 
-export function withTimeout(mutex: MutexInterface, timeout: number, timeoutError?: Error): MutexInterface;
-export function withTimeout(semaphore: SemaphoreInterface, timeout: number, timeoutError?: Error): SemaphoreInterface;
+export function withTimeout<U = void>(mutex: MutexInterface<U>, timeout: number, timeoutError?: Error): MutexInterface<U>;
+export function withTimeout<U = void>(semaphore: SemaphoreInterface<U>, timeout: number, timeoutError?: Error): SemaphoreInterface<U>;
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function withTimeout(sync: MutexInterface | SemaphoreInterface, timeout: number, timeoutError = E_TIMEOUT) {
+export function withTimeout<U = void>(sync: MutexInterface<U> | SemaphoreInterface<U>, timeout: number, timeoutError = E_TIMEOUT) {
     return {
-        acquire: (): Promise<MutexInterface.Releaser | [number, SemaphoreInterface.Releaser]> =>
+        acquire: (data: U): Promise<MutexInterface.Releaser | [number, SemaphoreInterface.Releaser]> =>
             new Promise(async (resolve, reject) => {
                 let isTimeout = false;
 
@@ -17,7 +17,7 @@ export function withTimeout(sync: MutexInterface | SemaphoreInterface, timeout: 
                 }, timeout);
 
                 try {
-                    const ticket = await sync.acquire();
+                    const ticket = await sync.acquire(data);
 
                     if (isTimeout) {
                         const release = Array.isArray(ticket) ? ticket[1] : ticket;
@@ -36,11 +36,11 @@ export function withTimeout(sync: MutexInterface | SemaphoreInterface, timeout: 
                 }
             }),
 
-        async runExclusive<T>(callback: (value?: number) => Promise<T> | T): Promise<T> {
+        async runExclusive<T>(callback: (value?: number) => Promise<T> | T, data: U): Promise<T> {
             let release: () => void = () => undefined;
 
             try {
-                const ticket = await this.acquire();
+                const ticket = await this.acquire(data);
 
                 if (Array.isArray(ticket)) {
                     release = ticket[1];
