@@ -1,19 +1,19 @@
 import MutexInterface from './MutexInterface';
 import Semaphore, { QueueEntry, QueueLike } from './Semaphore';
 
-class Mutex implements MutexInterface {
-    constructor(cancelError?: Error, queue?: QueueLike<QueueEntry>) {
-        this._semaphore = new Semaphore(1, cancelError, queue);
+class Mutex<U = void> implements MutexInterface<U> {
+    constructor(cancelError?: Error, queue?: QueueLike<QueueEntry<U>>) {
+        this._semaphore = new Semaphore<U>(1, cancelError, queue);
     }
 
-    async acquire(): Promise<MutexInterface.Releaser> {
-        const [, releaser] = await this._semaphore.acquire();
+    async acquire(data: U): Promise<MutexInterface.Releaser> {
+        const [, releaser] = await this._semaphore.acquire(data);
 
         return releaser;
     }
 
-    runExclusive<T>(callback: MutexInterface.Worker<T>): Promise<T> {
-        return this._semaphore.runExclusive(() => callback());
+    runExclusive<T>(callback: MutexInterface.Worker<T>, data: U): Promise<T> {
+        return this._semaphore.runExclusive(() => callback(), data);
     }
 
     isLocked(): boolean {
@@ -29,7 +29,7 @@ class Mutex implements MutexInterface {
         return this._semaphore.cancel();
     }
 
-    private _semaphore: Semaphore;
+    private _semaphore: Semaphore<U>;
 }
 
 export default Mutex;
